@@ -77,11 +77,57 @@ let rec increment (i,cnt) =
     match cnt with
     | [] -> [(i,1)]
     | (idn,c)::xs when (i <> idn) -> (idn,c)::(increment (i,xs))
-    | (idn,c)::xs when (i = idn) -> (idn, c+1)::xs
+    | (idn,c)::xs -> (idn, c+1)::xs
 
 let incr1 = increment (6,[(1,2);(4,1);(2,1);(6,1)]) // expected result: [(1, 2); (4, 1); (2, 1); (6, 2)]
 let incr2 = increment (6,[])                        // expected result: [(6, 1)] 
-let incr3 = increment (3,[(1,2);(4,1);(2,1);(6,1)]) // expected result: [(1, 2); (4, 1); (2, 1); (6, 1); (3, 1)]
+let incr3 = increment (3,[(1,2);(4,1);(2,1);(6,1)]);; // expected result: [(1, 2); (4, 1); (2, 1); (6, 1); (3, 1)]
+
+
+// 4. 
+// Declare a function toCounting: Order -> Counting, that makes a counting from an order. 
+// uses calls to increment (i,cnt) as accumulating list parameter to make the function tail recursive. 
+// the match case
+// | [], y::ys -> y::ys
+// ensures that the function will return a specific value when the end of order list is reached, returning the accumulated values. 
+
+
+let toCounting order =
+    let rec recToCounting order acc =
+        match order, acc with
+        | [], [] -> []
+        | [], y::ys -> y::ys
+        | x::xs, _ -> recToCounting xs (increment (x, acc))
+    recToCounting order [];;
+
+
+let tc1 = toCounting [1;4;2;1;6]                        // Expected result: [(1, 2); (4, 1); (2, 1); (6, 2)]
+let tc2 = toCounting [42;34;1;1;1;1;2;1;5;5;3;3;42;34]  // Expected result: [(42, 2); (34, 2); (1, 5); (2, 1); (5, 2); (3, 2)]
+
+
+// An overview is a list of tuples: (i,n,c,p) where i is a course identifier, n is a course name, c is the count of course i,
+// and p is the total price for the ordered number of course i. 
+// Overviews are modelled by: 
+
+type Overview = (Identifier * Name * Count * Price) list;;
+
+
+// 5.
+// Declare a function makeOverview: Counting*Menu -> Overview,
+// which gives an overview for the given counting and menu. 
+
+
+let rec makeOverview (cnt,men) =
+    match cnt with
+    | [] -> []
+    | (idn,num)::xs -> match (findCourse idn men) with 
+                       | None -> (idn, "", num, 0)::makeOverview(xs, men)
+                       | Some (n,p) -> (idn, n, num, num*p)::makeOverview(xs, men)
+
+let over1 = makeOverview ([(1,2);(4,1);(2,1);(6,1)], m1) // expected result: [(1, "Salad", 2, 70); (4, "Chicken", 1, 60); (2, "Soup", 1, 30); (6, "Lamb", 1, 115)]
+let over2 = makeOverview ([(1,2);(4,1);(2,1);(6,2)], m1) // expected result: [(1, "Salad", 2, 70); (4, "Chicken", 1, 60); (2, "Soup", 1, 30); (6, "Lamb", 1, 230)]
+let over3 = makeOverview ([(4,10);(2,10)], m1)           // expected result: [(4, "Chicken", 10, 600); (2, "Soup", 10, 300)]
+
 
 
 
